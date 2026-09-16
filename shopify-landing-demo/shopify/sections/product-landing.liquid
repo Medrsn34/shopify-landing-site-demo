@@ -1,0 +1,144 @@
+{% comment %}
+  Portfolio demo section — single-product CRO landing page.
+  Drop into a theme's /sections folder, then add it to a template
+  (e.g. templates/page.landing.json) or via the theme editor.
+
+  Relies on:
+    assets/product-landing.css
+    assets/product-landing.js
+{% endcomment %}
+
+{{ 'product-landing.css' | asset_url | stylesheet_tag }}
+
+{%- assign product = section.settings.product -%}
+
+<section class="pl-hero" data-section-id="{{ section.id }}">
+  <div class="pl-wrap pl-hero__grid">
+    <div class="pl-hero__copy">
+      {%- if section.settings.eyebrow != blank -%}
+        <span class="pl-tag">{{ section.settings.eyebrow }}</span>
+      {%- endif -%}
+
+      <h1 class="pl-headline">{{ section.settings.headline | default: product.title }}</h1>
+
+      {%- if section.settings.subheading != blank -%}
+        <p class="pl-sub">{{ section.settings.subheading }}</p>
+      {%- endif -%}
+
+      {%- if product != blank -%}
+        {%- form 'product', product, id: 'pl-product-form', class: 'pl-form' -%}
+          <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}" id="pl-variant-id">
+
+          <div class="pl-price-row">
+            <span class="pl-price" id="pl-price">{{ product.selected_or_first_available_variant.price | money }}</span>
+            {%- if product.compare_at_price > product.price -%}
+              <span class="pl-price-compare">{{ product.compare_at_price | money }}</span>
+            {%- endif -%}
+          </div>
+
+          {%- if product.variants.size > 1 -%}
+            <div class="pl-bundle-grid" id="pl-bundle-grid" role="radiogroup" aria-label="Quantity">
+              {%- for variant in product.variants -%}
+                <label class="pl-bundle-card{% if forloop.first %} selected{% endif %}" data-variant-id="{{ variant.id }}" data-price="{{ variant.price | money_without_currency }}">
+                  <input type="radio" name="pl-variant-radio" value="{{ variant.id }}" {% if forloop.first %}checked{% endif %}>
+                  <span class="pl-bundle-name">{{ variant.title }}</span>
+                  <span class="pl-bundle-price">{{ variant.price | money }}</span>
+                </label>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+
+          <button type="submit" class="pl-cta" {% unless product.available %}disabled{% endunless %}>
+            {%- if product.available -%}
+              Add to cart — {{ product.selected_or_first_available_variant.price | money }}
+            {%- else -%}
+              Sold out
+            {%- endif -%}
+          </button>
+        {%- endform -%}
+      {%- else -%}
+        <p class="pl-sub">Select a product in the section settings to activate the buy box.</p>
+      {%- endif -%}
+
+      {%- if section.settings.trust_line != blank -%}
+        <p class="pl-trust">{{ section.settings.trust_line }}</p>
+      {%- endif -%}
+    </div>
+
+    <div class="pl-hero__media">
+      {%- if product.featured_image != blank -%}
+        <img
+          src="{{ product.featured_image | image_url: width: 900 }}"
+          alt="{{ product.featured_image.alt | default: product.title }}"
+          loading="eager"
+          width="900"
+          height="{{ 900 | divided_by: product.featured_image.aspect_ratio }}"
+        >
+      {%- else -%}
+        <div class="pl-media-placeholder">Add a featured product image</div>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+{%- if section.blocks.size > 0 -%}
+<section class="pl-compare">
+  <div class="pl-wrap">
+    {%- if section.settings.compare_heading != blank -%}
+      <h2>{{ section.settings.compare_heading }}</h2>
+    {%- endif -%}
+    <div class="pl-compare-grid">
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'compare_row' -%}
+          <div class="pl-compare-row" {{ block.shopify_attributes }}>
+            <span class="pl-compare-label">{{ block.settings.label }}</span>
+            <span class="pl-compare-value {% if block.settings.is_yes %}is-yes{% endif %}">{{ block.settings.value }}</span>
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+{%- endif -%}
+
+<div class="pl-sticky-bar" id="pl-sticky-bar" data-section-id="{{ section.id }}">
+  <div class="pl-sticky-left">
+    {%- if product.featured_image != blank -%}
+      <img src="{{ product.featured_image | image_url: width: 80 }}" alt="" width="38" height="38">
+    {%- endif -%}
+    <span class="pl-sticky-name">{{ product.title }}</span>
+  </div>
+  <button type="button" class="pl-sticky-add" id="pl-sticky-add">Add to cart</button>
+</div>
+
+{{ 'product-landing.js' | asset_url | script_tag }}
+
+{% schema %}
+{
+  "name": "Product landing (CRO demo)",
+  "tag": "section",
+  "class": "pl-section",
+  "settings": [
+    { "type": "product", "id": "product", "label": "Product" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow tag", "default": "New · Limited batch" },
+    { "type": "text", "id": "headline", "label": "Headline (defaults to product title)" },
+    { "type": "textarea", "id": "subheading", "label": "Subheading" },
+    { "type": "text", "id": "trust_line", "label": "Trust line", "default": "Ships within 24h · 30-day returns" },
+    { "type": "text", "id": "compare_heading", "label": "Comparison table heading", "default": "What's actually different" }
+  ],
+  "blocks": [
+    {
+      "type": "compare_row",
+      "name": "Comparison row",
+      "settings": [
+        { "type": "text", "id": "label", "label": "Row label" },
+        { "type": "text", "id": "value", "label": "Value" },
+        { "type": "checkbox", "id": "is_yes", "label": "Highlight as positive", "default": true }
+      ]
+    }
+  ],
+  "presets": [
+    { "name": "Product landing (CRO demo)" }
+  ]
+}
+{% endschema %}
